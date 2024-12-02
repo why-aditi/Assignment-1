@@ -4,11 +4,6 @@
 
 A Flask-based API for efficient time series data retrieval and trend analysis using MongoDB.
 
-## Prerequisites
-
-- Python 3.9+
-- MongoDB 5.0+
-
 ## Setup Instructions
 
 ### 1. Clone the Repository
