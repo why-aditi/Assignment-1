@@ -31,20 +31,10 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Configure MongoDB
-
-- Install MongoDB locally or use a cloud service
-- Create a `.env` file with your MongoDB connection string
-
-```
-MONGO_URI=mongodb://localhost:27017
-DATABASE_NAME=timeseries_db
-```
-
-### 5. Run the Application
+### 4. Run the Application
 
 ```bash
-python app.py
+python main.py
 ```
 
 ## API Endpoints
