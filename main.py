@@ -1,16 +1,12 @@
 from flask import Flask, request, jsonify
 from datetime import datetime
+import pandas as pd
 from pymongo import MongoClient
-from dotenv import load_dotenv
-import os
 from pymongo import MongoClient
 
 app = Flask(__name__)
 
-load_dotenv()
-DB_CONN = os.getenv('DB_CONN')
-
-client = MongoClient(DB_CONN)
+client = MongoClient('mongodb://localhost:27017/')
 db = client['JBM']
 collection = db['Assignment1']  
 
@@ -51,7 +47,36 @@ def get_data():
 
 
 @app.route("/trend", methods=['GET'])  
-def trend():
+def get_trend():
+    window = request.args.get('window')
+    try: 
+        duration = int(window[:-1])
+        unit = window[-1]
+    except ValueError:
+        return jsonify({"error": "Invalid window format"}), 400
+    
+    max_time_entry = collection.find_one(
+        sort=[("Datetime", -1)],  
+        projection={"Datetime": 1, "_id": 0} 
+    )    
+    end_time = max_time_entry["Datetime"]
+    if isinstance(end_time, str):
+        end_time = datetime.fromisoformat(end_time)
+        
+    if unit =='m':
+        start_time = end_time - pd.Timedelta(weeks=duration*4)
+    elif unit =='d':
+        start_time = end_time - pd.Timedelta(days=duration)
+    elif unit =='h':
+        start_time = end_time - pd.Timedelta(hours=duration)
+    
+    query = {
+        "Datetime": {
+            "$gte": start_time,
+            "$lte": end_time
+        }
+    }
+    
     return jsonify({"message": "Trend endpoint is under construction."}), 200
 
 
