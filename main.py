@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 from datetime import datetime
 import pandas as pd
 from pymongo import MongoClient
-from pymongo import MongoClient
 
 app = Flask(__name__)
 
@@ -10,11 +9,9 @@ client = MongoClient('mongodb://localhost:27017/')
 db = client['JBM']
 collection = db['Assignment1']  
 
-
 @app.route("/")
 def hello_world():
     return "<p>Hello, World!</p>"
-
 
 @app.route("/data", methods=['GET'])  
 def get_data():
@@ -43,8 +40,6 @@ def get_data():
         return jsonify({"message": "No data found for the given time range"}), 404
 
     return jsonify(data), 200
-
-
 
 @app.route("/trend", methods=['GET'])  
 def get_trend():
@@ -77,8 +72,26 @@ def get_trend():
         }
     }
     
-    return jsonify({"message": "Trend endpoint is under construction."}), 200
-
-
+    data = list(collection.find(query, {"_id": 0}))  
+    
+    for i in range(1, len(data)):
+        datapoint = data[i]
+        count = 0
+        prev = data[i-1]['PT08']['S1(CO)']
+        if datapoint['PT08']['S1(CO)'] > prev:
+            count += 1
+        elif datapoint['PT08']['S1(CO)'] < prev:
+            count -= 1
+        else:
+            continue
+    
+    if count > 0:
+        value = 'increases'
+    elif count < 0:
+        value = 'decreases'
+    else:
+        value = 'same'
+    return jsonify({"datapoints": len(data), "value": value})
+    
 if __name__ == '__main__':
     app.run(debug=True)
