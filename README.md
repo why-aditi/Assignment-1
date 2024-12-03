@@ -39,8 +39,10 @@ python main.py
 Retrieve time series data for a specific time range.
 
 **Parameters:**
+
 - `startTime`: Start timestamp (ISO format)
 - `endTime`: End timestamp (ISO format)
+- `heading`: The required column
 
 **Example Request:**
 
@@ -53,10 +55,32 @@ GET /data?startTime=2023-01-01T00:00:00&endTime=2023-12-31T23:59:59
 Calculate trends over a specified period.
 
 **Parameters:**
+
 - `window`: Time window (e.g., 7d, 2h, 1m)
+- `startTime`: Start timestamp (ISO format)
+- `heading`: The required column
+- `datapoints`: Boolean if datapoints are required
 
 **Example Request:**
 
 ```
-GET /trend?window=7d
+GET /trend?window=2h&heading=CO(GT)&startTime=2004-03-10T19:00:00&datapoints=true
+```
+
+### GET `/trend-compare`
+
+Compares trends of two windows.
+
+**Parameters:**
+
+- `window`: Time window (e.g., 7d, 2h, 1m)
+- `startTime1`: Start timestamp (ISO format)
+- `startTime2`: Start timestamp (ISO format)
+- `heading`: The required column
+- `datapoints`: Boolean if datapoints are required
+
+**Example Request:**
+
+```
+GET /trend-compare?window=2h&heading=CO(GT)&startTime1=2004-03-10T19:00:00&startTime2=2004-03-13T03:00:00
 ```
