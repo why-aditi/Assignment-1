@@ -45,7 +45,7 @@ Retrieve time series data for a specific time range.
 **Example Request:**
 
 ```
-GET /data?collection=stockPrices&uid=AAPL&startTime=2023-01-01T00:00:00Z&endTime=2023-12-31T23:59:59Z
+GET /data?startTime=2023-01-01T00:00:00Z&endTime=2023-12-31T23:59:59Z
 ```
 
 ### GET `/trend`
@@ -58,5 +58,5 @@ Calculate trends over a specified period.
 **Example Request:**
 
 ```
-GET /trend?collection=stockPrices&window=7d
+GET /trend?window=7d
 ```
