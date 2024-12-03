@@ -13,7 +13,10 @@ collection = db['Assignment1']
 def hello_world():
     return "<p>Hello, World!</p>"
 
-@app.route("/data", methods=['GET'])  
+from datetime import datetime
+from flask import jsonify, request
+
+@app.route("/data", methods=['GET'])
 def get_data():
     start_time = request.args.get('startTime')
     end_time = request.args.get('endTime')
@@ -22,8 +25,8 @@ def get_data():
         return jsonify({"error": "startTime and endTime parameters are required"}), 400
 
     try:
-        start_time = datetime.fromisoformat(start_time)
-        end_time = datetime.fromisoformat(end_time)
+        start_time = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
+        end_time = datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S")
     except ValueError:
         return jsonify({"error": "Invalid datetime format. Use ISO format like 'YYYY-MM-DDTHH:MM:SS'"}), 400
 
@@ -46,88 +49,67 @@ def get_trend():
     start_time = request.args.get('startTime')
     window = request.args.get('window')
     heading = request.args.get('heading')
-    try: 
-        duration = int(window[:-1])
-        unit = window[-1]
-    except ValueError:
-        return jsonify({"error": "Invalid window format"}), 400
-    
-    start_time = datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S')
-        
-    if unit =='m':
-        end_time = start_time + relativedelta(months=duration)
-    elif unit =='d':
-        end_time = start_time + relativedelta(days=duration)
-    elif unit =='h':
-        end_time = start_time + relativedelta(hours=duration)
-    
-    query = {
-        "Datetime": {
-            "$gte": start_time,
-            "$lte": end_time
-        }
-    }
-    
-    data = list(collection.find(query, {"_id": 0}))  
-    
-    count = 0
-    for i in range(1, len(data)):
-        datapoint = data[i]
-        prev = data[i - 1][heading]
-        if datapoint[heading] > prev:
-            count += (datapoint[heading] - prev)
-        elif datapoint[heading] < prev:
-            count += (datapoint[heading] - prev)
+    datapoints = request.args.get('datapoints', 'true').lower()  
 
-    
-    if count > 0:
-        value = 'increases'
-    elif count < 0:
-        value = 'decreases'
-    else:
-        value = 'same'
-    return jsonify({"datapoints": data, "value": value})
-    
-@app.route("/per-trend", methods=['GET'])  
-def get_per_trend():
-    start_time = request.args.get('startTime')
-    window = request.args.get('window')
-    heading = request.args.get('heading')
     try: 
         duration = int(window[:-1])
         unit = window[-1]
     except ValueError:
-        return jsonify({"error": "Invalid window format"}), 400
-    
-    start_time = datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S')
-        
-    if unit =='m':
+        return jsonify({"error": "Invalid window format. Use formats like '3d', '2m', '1h'"}), 400
+
+    try:
+        start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S')  # Use the correct datetime class
+    except ValueError:
+        return jsonify({"error": "Invalid startTime format. Use 'YYYY-MM-DDTHH:MM:SS'"}), 400
+
+    if unit == 'm':
         end_time = start_time + relativedelta(months=duration)
-    elif unit =='d':
+    elif unit == 'd':
         end_time = start_time + relativedelta(days=duration)
-    elif unit =='h':
+    elif unit == 'h':
         end_time = start_time + relativedelta(hours=duration)
-    
+    else:
+        return jsonify({"error": "Invalid window unit. Use 'm', 'd', or 'h'"}), 400
+
     query = {
         "Datetime": {
             "$gte": start_time,
             "$lte": end_time
         }
     }
-    
+
     data = list(collection.find(query, {"_id": 0}))  
-    
-    per = ((data[-1][heading] - data[0][heading])/data[0][heading])*100
-    
+
+    if len(data) < 2:
+        return jsonify({"error": "Not enough data points to calculate trend"}), 400
+
+    try:
+        per = ((data[-1][heading] - data[0][heading]) / data[0][heading]) * 100
+    except (KeyError, ZeroDivisionError):
+        return jsonify({"error": f"Unable to calculate percentage change for heading '{heading}'"}), 400
+
     if per > 0:
         value = f"{abs(per):.2f}% increase"
     elif per < 0:
         value = f"{abs(per):.2f}% decrease"
     else: 
         value = 'same'
+
+    if datapoints == 'false':  
+        return jsonify({"value": value})
+    else:
+        return jsonify({"datapoints": data, "value": value})
+
+    
+
+@app.route('/compare-windows', methods=['GET'])
+def compare_windows():
+    start_time1 = request.args.get('startTime1')
+    start_time2 = request.args.get('startTime2')
+    window = request.args.get('window')
+    heading = request.args.get('heading')
         
-    return jsonify({"datapoints": data, "value": value})
-    
-    
+    return jsonify({"value": value})
+
 if __name__ == '__main__':
     app.run(debug=True)
