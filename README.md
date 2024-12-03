@@ -39,9 +39,6 @@ python main.py
 Retrieve time series data for a specific time range.
 
 **Parameters:**
-
-- `collection`: Name of MongoDB collection
-- `uid`: Unique identifier for filtering
 - `startTime`: Start timestamp (ISO format)
 - `endTime`: End timestamp (ISO format)
 
@@ -56,8 +53,6 @@ GET /data?collection=stockPrices&uid=AAPL&startTime=2023-01-01T00:00:00Z&endTime
 Calculate trends over a specified period.
 
 **Parameters:**
-
-- `collection`: Name of MongoDB collection
 - `window`: Time window (e.g., 7d, 2h, 1m)
 
 **Example Request:**
