@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify
 import datetime
 from pymongo import MongoClient
-from dateutil.relativedelta import relativedelta
-from helper_function import analysis, compare, format
+from helper_function import analysis, compare, format, format_comp
 
 app = Flask(__name__)
 
@@ -75,13 +74,14 @@ def get_trend():
 
 @app.route("/trend-compare", methods=['GET'])
 def get_trend_compare():
-    start_time1 = request.args.get('startTime1')
-    start_time2 = request.args.get('startTime2')
-    window = request.args.get('window')
+    window1_start = request.args.get('window1_start')
+    window2_start = request.args.get('window2_start')
+    window1_end = request.args.get('window1_end')
+    window2_end = request.args.get('window1_end')
     heading = request.args.get('heading')
 
-    start_time1, end_time1 = format(start_time1, window)
-    start_time2, end_time2 = format(start_time2, window)
+    start_time1, end_time1 = format_comp(window1_start, window1_end)
+    start_time2, end_time2 = format_comp(window2_start, window2_end)
     
     query1 = {"Datetime": {"$gte": start_time1, "$lte": end_time1}}
     query2 = {"Datetime": {"$gte": start_time2, "$lte": end_time2}}

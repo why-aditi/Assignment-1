@@ -65,3 +65,11 @@ def format(st, window):
         return jsonify({"error": "Invalid window unit. Use 'm', 'd', or 'h'"}), 400
     
     return st, et
+
+def format_comp(st, et):
+    try:
+        st = datetime.datetime.strptime(st, '%Y-%m-%dT%H:%M:%S')  
+        et = datetime.datetime.strptime(et, '%Y-%m-%dT%H:%M:%S')  
+    except ValueError:
+        return jsonify({"error": "Invalid startTime format. Use 'YYYY-MM-DDTHH:MM:SS'"}), 400
+    return st, et
