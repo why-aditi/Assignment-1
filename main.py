@@ -91,6 +91,9 @@ def get_trend_compare():
 
     if len(data1) < 2 or len(data2) < 2:
         return jsonify({"error": "Not enough data points to calculate trend for one or both time windows"}), 400
+    
+    if len(data1) != len(data2):
+        return jsonify({"error": "Unequal number of datapoints in windows", "data1": len(data1), "data2": len(data2)})
 
     value = compare(data1, data2, heading)
 
