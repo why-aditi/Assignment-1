@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
-from datetime import datetime
-import pandas as pd
+import datetime
 from pymongo import MongoClient
+from dateutil.relativedelta import relativedelta
 
 app = Flask(__name__)
 
@@ -43,27 +43,23 @@ def get_data():
 
 @app.route("/trend", methods=['GET'])  
 def get_trend():
+    start_time = request.args.get('startTime')
     window = request.args.get('window')
+    heading = request.args.get('heading')
     try: 
         duration = int(window[:-1])
         unit = window[-1]
     except ValueError:
         return jsonify({"error": "Invalid window format"}), 400
     
-    max_time_entry = collection.find_one(
-        sort=[("Datetime", -1)],  
-        projection={"Datetime": 1, "_id": 0} 
-    )    
-    end_time = max_time_entry["Datetime"]
-    if isinstance(end_time, str):
-        end_time = datetime.fromisoformat(end_time)
+    start_time = datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S')
         
     if unit =='m':
-        start_time = end_time - pd.Timedelta(weeks=duration*4)
+        end_time = start_time + relativedelta(months=duration)
     elif unit =='d':
-        start_time = end_time - pd.Timedelta(days=duration)
+        end_time = start_time + relativedelta(days=duration)
     elif unit =='h':
-        start_time = end_time - pd.Timedelta(hours=duration)
+        end_time = start_time + relativedelta(hours=duration)
     
     query = {
         "Datetime": {
@@ -74,16 +70,15 @@ def get_trend():
     
     data = list(collection.find(query, {"_id": 0}))  
     
+    count = 0
     for i in range(1, len(data)):
         datapoint = data[i]
-        count = 0
-        prev = data[i-1]['PT08']['S1(CO)']
-        if datapoint['PT08']['S1(CO)'] > prev:
-            count += 1
-        elif datapoint['PT08']['S1(CO)'] < prev:
-            count -= 1
-        else:
-            continue
+        prev = data[i - 1][heading]
+        if datapoint[heading] > prev:
+            count += (datapoint[heading] - prev)
+        elif datapoint[heading] < prev:
+            count += (datapoint[heading] - prev)
+
     
     if count > 0:
         value = 'increases'
@@ -91,7 +86,48 @@ def get_trend():
         value = 'decreases'
     else:
         value = 'same'
-    return jsonify({"datapoints": len(data), "value": value})
+    return jsonify({"datapoints": data, "value": value})
+    
+@app.route("/per-trend", methods=['GET'])  
+def get_per_trend():
+    start_time = request.args.get('startTime')
+    window = request.args.get('window')
+    heading = request.args.get('heading')
+    try: 
+        duration = int(window[:-1])
+        unit = window[-1]
+    except ValueError:
+        return jsonify({"error": "Invalid window format"}), 400
+    
+    start_time = datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S')
+        
+    if unit =='m':
+        end_time = start_time + relativedelta(months=duration)
+    elif unit =='d':
+        end_time = start_time + relativedelta(days=duration)
+    elif unit =='h':
+        end_time = start_time + relativedelta(hours=duration)
+    
+    query = {
+        "Datetime": {
+            "$gte": start_time,
+            "$lte": end_time
+        }
+    }
+    
+    data = list(collection.find(query, {"_id": 0}))  
+    
+    per = ((data[-1][heading] - data[0][heading])/data[0][heading])*100
+    
+    if per > 0:
+        value = f"{abs(per):.2f}% increase"
+    elif per < 0:
+        value = f"{abs(per):.2f}% decrease"
+    else: 
+        value = 'same'
+        
+    return jsonify({"datapoints": data, "value": value})
+    
     
 if __name__ == '__main__':
     app.run(debug=True)
