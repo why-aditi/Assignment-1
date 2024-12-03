@@ -45,7 +45,7 @@ Retrieve time series data for a specific time range.
 **Example Request:**
 
 ```
-GET /data?startTime=2023-01-01T00:00:00Z&endTime=2023-12-31T23:59:59Z
+GET /data?startTime=2023-01-01T00:00:00&endTime=2023-12-31T23:59:59
 ```
 
 ### GET `/trend`
