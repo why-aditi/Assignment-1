@@ -73,13 +73,14 @@ Compares trends of two windows.
 
 **Parameters:**
 
-- `window`: Time window (e.g., 7d, 2h, 1m)
-- `startTime1`: Start timestamp (ISO format)
-- `startTime2`: Start timestamp (ISO format)
+- `window1_start`: Start timestamp (ISO format)
+- `window2_start`: Start timestamp (ISO format)
+- `window1_end`: End timestamp (ISO format)
+- `window2_end`: End timestamp (ISO format)
 - `heading`: The required column
 
 **Example Request:**
 
 ```
-GET /trend-compare?window=2h&heading=CO(GT)&startTime1=2004-03-10T19:00:00&startTime2=2004-03-13T03:00:00
+GET /trend-compare?heading=AH&window1_start=2004-03-10T17:00:00&window1_end=2004-03-13T17:00:00&window2_start=2004-03-11T02:00:00&window1_end=2004-03-14T02:00:00
 ```
