@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import datetime
 from pymongo import MongoClient
 from dateutil.relativedelta import relativedelta
-from helper_function import analysis, compare
+from helper_function import analysis, compare, format
 
 app = Flask(__name__)
 
@@ -43,6 +43,7 @@ def get_data():
 
     return jsonify(data), 200
 
+
 @app.route("/trend", methods=['GET'])  
 def get_trend():
     start_time = request.args.get('startTime')
@@ -50,25 +51,7 @@ def get_trend():
     heading = request.args.get('heading')
     datapoints = request.args.get('datapoints', 'true').lower()  
 
-    try: 
-        duration = int(window[:-1])
-        unit = window[-1]
-    except ValueError:
-        return jsonify({"error": "Invalid window format. Use formats like '3d', '2m', '1h'"}), 400
-
-    try:
-        start_time = datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S')  
-    except ValueError:
-        return jsonify({"error": "Invalid startTime format. Use 'YYYY-MM-DDTHH:MM:SS'"}), 400
-
-    if unit == 'm':
-        end_time = start_time + relativedelta(months=duration)
-    elif unit == 'd':
-        end_time = start_time + relativedelta(days=duration)
-    elif unit == 'h':
-        end_time = start_time + relativedelta(hours=duration)
-    else:
-        return jsonify({"error": "Invalid window unit. Use 'm', 'd', or 'h'"}), 400
+    start_time, end_time = format(start_time, window)
 
     query = {
         "Datetime": {
@@ -89,7 +72,6 @@ def get_trend():
     else:
         return jsonify({"datapoints": data, "value": value})
 
-    
 
 @app.route("/trend-compare", methods=['GET'])
 def get_trend_compare():
@@ -98,33 +80,9 @@ def get_trend_compare():
     window = request.args.get('window')
     heading = request.args.get('heading')
 
-    if not start_time1 or not start_time2:
-        return jsonify({"error": "Both startTime1 and startTime2 parameters are required"}), 400
-
-    try:
-        start_time1 = datetime.datetime.strptime(start_time1, '%Y-%m-%dT%H:%M:%S')
-        start_time2 = datetime.datetime.strptime(start_time2, '%Y-%m-%dT%H:%M:%S')
-    except ValueError:
-        return jsonify({"error": "Invalid datetime format. Use 'YYYY-MM-DDTHH:MM:SS'"}), 400
+    start_time1, end_time1 = format(start_time1, window)
+    start_time2, end_time2 = format(start_time2, window)
     
-    try:
-        duration = int(window[:-1])
-        unit = window[-1]
-    except ValueError:
-        return jsonify({"error": "Invalid window format. Use formats like '3d', '2m', '1h'"}), 400
-
-    if unit == 'm':
-        end_time1 = start_time1 + relativedelta(months=duration)
-        end_time2 = start_time2 + relativedelta(months=duration)
-    elif unit == 'd':
-        end_time1 = start_time1 + relativedelta(days=duration)
-        end_time2 = start_time2 + relativedelta(days=duration)
-    elif unit == 'h':
-        end_time1 = start_time1 + relativedelta(hours=duration)
-        end_time2 = start_time2 + relativedelta(hours=duration)
-    else:
-        return jsonify({"error": "Invalid window unit. Use 'm', 'd', or 'h'"}), 400
-
     query1 = {"Datetime": {"$gte": start_time1, "$lte": end_time1}}
     query2 = {"Datetime": {"$gte": start_time2, "$lte": end_time2}}
 
