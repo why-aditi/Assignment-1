@@ -77,7 +77,6 @@ Compares trends of two windows.
 - `startTime1`: Start timestamp (ISO format)
 - `startTime2`: Start timestamp (ISO format)
 - `heading`: The required column
-- `datapoints`: Boolean if datapoints are required
 
 **Example Request:**
 

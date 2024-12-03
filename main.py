@@ -2,27 +2,13 @@ from flask import Flask, request, jsonify
 import datetime
 from pymongo import MongoClient
 from dateutil.relativedelta import relativedelta
+from helper_function import analysis, compare
 
 app = Flask(__name__)
 
 client = MongoClient('mongodb://localhost:27017/')
 db = client['JBM']
 collection = db['Assignment1']  
-
-def analysis(data, heading):
-    try:
-        per = ((data[-1][heading] - data[0][heading]) / data[0][heading]) * 100
-    except (KeyError, ZeroDivisionError):
-        return {"error": f"Unable to calculate percentage change for heading '{heading}'"}, 400
-
-    if per > 0:
-        value = f"{abs(per):.2f}% increase"
-    elif per < 0:
-        value = f"{abs(per):.2f}% decrease"
-    else: 
-        value = 'same'
-
-    return value
 
 
 @app.route("/")
@@ -148,15 +134,9 @@ def get_trend_compare():
     if len(data1) < 2 or len(data2) < 2:
         return jsonify({"error": "Not enough data points to calculate trend for one or both time windows"}), 400
 
-    trend1 = analysis(data1, heading)
-    trend2 = analysis(data2, heading)
+    value = compare(data1, data2, heading)
 
-    return jsonify({
-        "trend1": trend1,
-        "trend2": trend2,
-        "window1_data": data1,
-        "window2_data": data2
-    })
+    return jsonify(value)
 
 
 if __name__ == '__main__':
