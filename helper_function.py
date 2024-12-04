@@ -66,10 +66,12 @@ def format(st, window):
     
     return st, et
 
+from datetime import datetime
+
 def format_comp(st, et):
     try:
-        st = datetime.datetime.strptime(st, '%Y-%m-%dT%H:%M:%S')  
-        et = datetime.datetime.strptime(et, '%Y-%m-%dT%H:%M:%S')  
-    except ValueError:
-        return jsonify({"error": "Invalid startTime format. Use 'YYYY-MM-DDTHH:MM:SS'"}), 400
-    return st, et
+        start_time = datetime.strptime(st, '%Y-%m-%dT%H:%M:%S')
+        end_time = datetime.strptime(et, '%Y-%m-%dT%H:%M:%S')
+        return start_time, end_time
+    except ValueError as ve:
+        raise ValueError(f"Invalid datetime format. Use 'YYYY-MM-DDTHH:MM:SS'. Details: {str(ve)}")

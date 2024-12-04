@@ -70,31 +70,43 @@ def get_trend():
 
 @app.route("/trend-compare", methods=['GET'])
 def get_trend_compare():
-    window1_start = request.args.get('window1_start')
-    window2_start = request.args.get('window2_start')
-    window1_end = request.args.get('window1_end')
-    window2_end = request.args.get('window1_end')
-    heading = request.args.get('heading')
+    try:
+        window1_start = request.args.get('window1_start')
+        window1_end = request.args.get('window1_end')
+        window2_start = request.args.get('window2_start')
+        window2_end = request.args.get('window2_end')
+        heading = request.args.get('heading')
 
-    start_time1, end_time1 = format_comp(window1_start, window1_end)
-    start_time2, end_time2 = format_comp(window2_start, window2_end)
-    
-    query1 = {"Datetime": {"$gte": start_time1, "$lte": end_time1}}
-    query2 = {"Datetime": {"$gte": start_time2, "$lte": end_time2}}
+        if not all([window1_start, window1_end, window2_start, window2_end, heading]):
+            return jsonify({"error": "Missing required parameters"}), 400
 
-    data1 = list(collection.find(query1, {"_id": 0}))
-    data2 = list(collection.find(query2, {"_id": 0}))
-    
+        start_time1, end_time1 = format_comp(window1_start, window1_end)
+        start_time2, end_time2 = format_comp(window2_start, window2_end)
 
-    if len(data1) < 2 or len(data2) < 2:
-        return jsonify({"error": "Not enough data points to calculate trend for one or both time windows"}), 400
-    
-    if (end_time1 - start_time1).seconds != (end_time2 - start_time2).seconds:
-        return jsonify({"error": "Unequal windows", "Window1": (end_time1 - start_time1).seconds, "Window2": (end_time2 - start_time2).seconds})
+        query1 = {"Datetime": {"$gte": start_time1, "$lte": end_time1}}
+        query2 = {"Datetime": {"$gte": start_time2, "$lte": end_time2}}
 
-    value = compare(data1, data2, heading)
+        data1 = list(collection.find(query1, {"_id": 0}))
+        data2 = list(collection.find(query2, {"_id": 0}))
 
-    return jsonify(value)
+        if len(data1) < 2 or len(data2) < 2:
+            return jsonify({"error": "Not enough data points to calculate trend for one or both time windows"}), 400
+
+        if (end_time1 - start_time1).total_seconds() != (end_time2 - start_time2).total_seconds():
+            return jsonify({
+                "error": "Unequal windows",
+                "Window1_duration_seconds": (end_time1 - start_time1).total_seconds(),
+                "Window2_duration_seconds": (end_time2 - start_time2).total_seconds()
+            }), 400
+
+        value = compare(data1, data2, heading)
+        return jsonify(value)
+
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
 
 if __name__ == '__main__':
