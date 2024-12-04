@@ -1,46 +1,54 @@
 from flask import jsonify
 import datetime
 from dateutil.relativedelta import relativedelta
+import statistics
 
 def analysis(data, heading):
     try:
-        per = ((data[-1][heading] - data[0][heading]) / data[0][heading]) * 100
+        per = ((data[-1][heading] - data[0][heading]) / data[0][heading])*100
     except (KeyError, ZeroDivisionError):
         return {"error": f"Unable to calculate percentage change for heading '{heading}'"}, 400
+    
+    return per
 
-    if per > 0:
-        value = f"{abs(per):.2f}% increase"
-    elif per < 0:
-        value = f"{abs(per):.2f}% decrease"
-    else: 
-        value = 'same'
-
-    return value
-
-def compare(data1, data2, heading):
+def compare_mean(data1, data2, heading):
     count1, count2 = 0, 0
     for i in range(len(data1)):
         d1 = data1[i]
-        count1 += d1[heading]
+        count1 += float(d1[heading])
     for j in range(len(data2)):
         d2 = data2[j]
-        count2 += d2[heading]
+        count2 += float(d2[heading])
     c1 = count1/len(data1)
     c2 = count2/len(data2)
     
     try:
-        p1 = ((c1-c2)/c1)*100
-        p2 = ((c1-c2)/c1)*100
+        p = ((c2-c1)/c1)*100
     except (KeyError, ZeroDivisionError):
         return {"error": f"Unable to calculate percentage change for heading '{heading}'"}, 400
     
-    if c1 > c2:
-        value = f"Window 1 is greater than Window 2 by {abs(p2):.2f}%"
-    elif c1 < c2:
-        value = f"Window 2 is greater than Window 1 by {abs(p1): .2f}%"
-    else:
-        value = f"Window 1 and Window 2 show similar trend"
-        
+    value = p    
+    return value
+
+
+def compare_var(data1, data2, heading):
+    d1, d2 = [], []
+    
+    for datapoint in data1:
+        d1.append(float(datapoint[heading])) 
+    
+    for datapoint in data2:
+        d2.append(float(datapoint[heading]))  
+    
+    c1 = statistics.variance(d1)
+    c2 = statistics.variance(d2)
+    
+    try:
+        p = ((c2-c1)/c1)*100
+    except (KeyError, ZeroDivisionError):
+        return {"error": f"Unable to calculate percentage change for heading '{heading}'"}, 400
+    
+    value = p    
     return value
 
 def format(st, window):
@@ -66,12 +74,11 @@ def format(st, window):
     
     return st, et
 
-from datetime import datetime
 
-def format_comp(st, et):
+def format_comp(start, end):
     try:
-        start_time = datetime.strptime(st, '%Y-%m-%dT%H:%M:%S')
-        end_time = datetime.strptime(et, '%Y-%m-%dT%H:%M:%S')
+        start_time = datetime.datetime.strptime(start, '%Y-%m-%dT%H:%M:%S')
+        end_time = datetime.datetime.strptime(end, '%Y-%m-%dT%H:%M:%S')
         return start_time, end_time
-    except ValueError as ve:
-        raise ValueError(f"Invalid datetime format. Use 'YYYY-MM-DDTHH:MM:SS'. Details: {str(ve)}")
+    except ValueError:
+        raise ValueError(f"Invalid date format. Expected 'YYYY-MM-DDTHH:MM:SS' but got {start} and {end}.")

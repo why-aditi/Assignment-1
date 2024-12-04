@@ -78,9 +78,10 @@ Compares trends of two windows.
 - `window1_end`: End timestamp (ISO format)
 - `window2_end`: End timestamp (ISO format)
 - `heading`: The required column
+- `mode`: mean or variance
 
 **Example Request:**
 
 ```
-GET /trend-compare?heading=AH&window1_start=2004-03-10T17:00:00&window1_end=2004-03-13T17:00:00&window2_start=2004-03-11T02:00:00&window1_end=2004-03-14T02:00:00
+GET /trend-compare?heading=CO(GT)&window1_start=2004-03-10T17:00:00&window1_end=2004-03-13T12:00:00&window2_start=2004-03-11T17:00:00&window2_end=2004-03-14T12:00:00&mode=variance
 ```

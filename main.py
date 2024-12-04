@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
-import datetime
 from pymongo import MongoClient
-from helper_function import analysis, compare, format, format_comp
+from helper_function import analysis, compare_mean, format, format_comp, compare_var
 
 app = Flask(__name__)
 
@@ -60,12 +59,12 @@ def get_trend():
     if len(data) < 2:
         return jsonify({"error": "Not enough data points to calculate trend"}), 400
 
-    value = analysis(data, heading)
+    change = analysis(data, heading)
 
     if datapoints == 'false':  
-        return jsonify({"value": value})
+        return jsonify({"change_percentage": change})
     else:
-        return jsonify({"datapoints": data, "value": value})
+        return jsonify({"datapoints": data, "change_percentage": change})
 
 
 @app.route("/trend-compare", methods=['GET'])
@@ -76,6 +75,7 @@ def get_trend_compare():
         window2_start = request.args.get('window2_start')
         window2_end = request.args.get('window2_end')
         heading = request.args.get('heading')
+        mode = request.args.get('mode')
 
         if not all([window1_start, window1_end, window2_start, window2_end, heading]):
             return jsonify({"error": "Missing required parameters"}), 400
@@ -99,8 +99,12 @@ def get_trend_compare():
                 "Window2_duration_seconds": (end_time2 - start_time2).total_seconds()
             }), 400
 
-        value = compare(data1, data2, heading)
-        return jsonify(value)
+        if mode == 'mean':
+            value = compare_mean(data1, data2, heading)
+        elif mode == 'variance':
+            value = compare_var(data1, data2, heading)
+
+        return jsonify({"change_percentage": value})
 
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
