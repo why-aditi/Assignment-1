@@ -22,11 +22,7 @@ def get_data():
     if not start_time or not end_time:
         return jsonify({"error": "startTime and endTime parameters are required"}), 400
 
-    try:
-        start_time = datetime.datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
-        end_time = datetime.datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S")
-    except ValueError:
-        return jsonify({"error": "Invalid datetime format. Use ISO format like 'YYYY-MM-DDTHH:MM:SS'"}), 400
+    start_time, end_time = format_comp(start_time, end_time)
 
     query = {
         "Datetime": {
@@ -88,12 +84,13 @@ def get_trend_compare():
 
     data1 = list(collection.find(query1, {"_id": 0}))
     data2 = list(collection.find(query2, {"_id": 0}))
+    
 
     if len(data1) < 2 or len(data2) < 2:
         return jsonify({"error": "Not enough data points to calculate trend for one or both time windows"}), 400
     
-    if len(data1) != len(data2):
-        return jsonify({"error": "Unequal number of datapoints in windows", "data1": len(data1), "data2": len(data2)})
+    if (end_time1 - start_time1).seconds != (end_time2 - start_time2).seconds:
+        return jsonify({"error": "Unequal windows", "Window1": (end_time1 - start_time1).seconds, "Window2": (end_time2 - start_time2).seconds})
 
     value = compare(data1, data2, heading)
 
